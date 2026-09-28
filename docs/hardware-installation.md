@@ -140,13 +140,13 @@ Disconnect the LiFePO4 battery before changing power wiring.
 
 1. Mount the recommended 5 V regulator according to its manufacturer instructions.
 2. Connect the regulator input to its own fused distribution branch.
-3. Size the breaker and wire for the regulator and the current FRC electrical rules.
+3. Size the branch fuse and wire for the regulator manufacturer's limits.
 4. Connect the regulator output to the Orange Pi with a locking USB-C cable or secured USB-C pigtail.
 5. Support the cable so vibration cannot work the connector loose.
 6. Check the input polarity and output polarity before applying power.
 7. Leave the Orange Pi disconnected from the regulator.
 8. Power the regulator and measure its output with a multimeter.
-9. Remove robot power after confirming the correct output.
+9. Turn off the master switch and disconnect the battery after confirming the correct output.
 10. Connect the verified USB-C output to the Orange Pi.
 
 Do not power the Orange Pi from the roboRIO USB port. Do not connect raw battery voltage to the Orange Pi. An undervoltage can cause throttling, camera loss, corrupted storage, or an unexpected reboot.

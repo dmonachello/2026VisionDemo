@@ -16,13 +16,20 @@ The project already has these main components:
 
 Add these parts for the vision installation:
 
+- a 12.8 V LiFePO4 battery with a built-in battery-management system;
+- a charger made for a four-cell LiFePO4 battery;
+- a main fuse mounted close to the battery;
+- a master power switch;
+- a small fused distribution block;
+- branch fuses sized for the connected devices and wire;
+- a battery monitor or low-voltage alarm;
 - an industrial-grade microSD card, 8 GB minimum and 16 GB or larger recommended;
 - an Orange Pi 5 heatsink and fan;
 - a PhotonVision-recommended 5 V regulator, such as a Redux Robotics Zinc-V or Pololu S13V30F5;
 - a center-positive barrel power cable for the OM5P-AC;
 - a locking or mechanically secured USB-C power cable for the Orange Pi;
 - red and black 18 AWG or 20 AWG power wire;
-- a breaker and connection hardware that match the regulator instructions and the current FRC electrical rules;
+- connection hardware that matches the regulator instructions;
 - an unmanaged Ethernet switch with a documented input range that matches its power branch;
 - three short Ethernet cables for the radio, the roboRIO, and the Orange Pi;
 - the USB cable supplied with the Arducam;
@@ -42,18 +49,19 @@ Calibration and measurement work also needs:
 - a tape measure; and
 - a level or angle reference for the physical validation fixture.
 
-The robot battery, main breaker, and PDP or PDH are part of the robot control system rather than the vision kit. They must be present for an on-robot installation.
-
 ## Use this connection layout
 
 ```text
-12 V power source
+12.8 V LiFePO4 battery
      |
      v
-Main breaker
+Main fuse
      |
      v
-PDP, PDH, or portable fused distribution
+Master switch
+     |
+     v
+Fused distribution block
      |
      +-----------------------> roboRIO power input
      |
@@ -73,7 +81,17 @@ Xbox controller -- USB --> Driver Station computer -- radio link --> robot
 
 The Xbox controller does not connect to the roboRIO or Orange Pi. The Driver Station computer reads the X button and sends controller state through the normal FRC control link.
 
-For the motor-free portable system, a fused 12.8 V LiFePO4 battery can replace the FRC battery, main breaker, and PDP or PDH. Connect the battery to a master fuse and switch, then to a small fused distribution block. The roboRIO, Orange Pi regulator, OM5P-AC, and Ethernet switch each get a separate branch.
+The roboRIO, Orange Pi regulator, OM5P-AC, and Ethernet switch each get a separate fused branch.
+
+## Change the power source for future robot installation
+
+The portable installation does not use a PDP or PDH. When this system moves to a drivetrain robot, replace only the upstream portable power equipment:
+
+```text
+FRC battery --> main breaker --> PDP or PDH
+```
+
+Keep the downstream roboRIO, Orange Pi regulator, radio, and switch branches. Recheck every branch against the game manual for the season in which the robot competes.
 
 ## Prepare the Orange Pi
 
@@ -118,10 +136,10 @@ The B0332 has a listed focus range of about 1 meter to infinity. Place the camer
 
 ## Wire the Orange Pi power
 
-Disconnect the robot battery before changing power wiring.
+Disconnect the LiFePO4 battery before changing power wiring.
 
 1. Mount the recommended 5 V regulator according to its manufacturer instructions.
-2. Connect the regulator input to its own protected PDP or PDH branch circuit.
+2. Connect the regulator input to its own fused distribution branch.
 3. Size the breaker and wire for the regulator and the current FRC electrical rules.
 4. Connect the regulator output to the Orange Pi with a locking USB-C cable or secured USB-C pigtail.
 5. Support the cable so vibration cannot work the connector loose.
@@ -131,7 +149,7 @@ Disconnect the robot battery before changing power wiring.
 9. Remove robot power after confirming the correct output.
 10. Connect the verified USB-C output to the Orange Pi.
 
-Do not power the Orange Pi from the roboRIO USB port. Do not connect raw robot battery voltage to the Orange Pi. An undervoltage can cause throttling, camera loss, corrupted storage, or an unexpected reboot.
+Do not power the Orange Pi from the roboRIO USB port. Do not connect raw battery voltage to the Orange Pi. An undervoltage can cause throttling, camera loss, corrupted storage, or an unexpected reboot.
 
 Follow the [PhotonVision power wiring guide](https://docs.photonvision.org/en/latest/docs/quick-start/wiring.html) for the selected regulator. The guide recommends 18 AWG or 20 AWG wire and a secured coprocessor power connector.
 
@@ -186,7 +204,7 @@ Do not connect the Orange Pi to the OM5P-AC's second Ethernet port. PhotonVision
 2. Confirm that every board is mounted and every cable has strain relief.
 3. Confirm that the Orange Pi fan can turn freely.
 4. Confirm the regulator polarity one more time.
-5. Connect the selected power source and turn on the master switch or main breaker.
+5. Connect the LiFePO4 battery and turn on the master switch.
 6. Watch the Orange Pi for a normal boot.
 7. Check the switch, roboRIO, and Orange Pi Ethernet link lights.
 8. Confirm that the Orange Pi stays powered while the roboRIO boots.

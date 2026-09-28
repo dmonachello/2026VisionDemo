@@ -113,6 +113,14 @@ The desired pose may include:
 * lateral position relative to the tag;
 * robot orientation relative to the tag.
 
+The drivetrain control loop shall run on its own fixed schedule. It shall not run only when a vision measurement arrives.
+
+A new vision measurement shall refresh the drivetrain's timestamped relative-pose estimate. Between vision measurements, the drivetrain shall continue its control loop using its current estimate, wheel odometry, and gyro data.
+
+Direct closed-loop alignment from live vision shall require `PERIODIC` delivery mode. `SNAPSHOT` shall not provide continuing vision feedback to a closed-loop alignment controller.
+
+If the latest measurement becomes `NO TARGET`, `UNRELIABLE`, or older than the configured maximum age, the automatic alignment command shall stop producing movement commands or enter another explicitly defined safe state.
+
 Automatic drivetrain control is explicitly outside the scope of Phases 1 and 2.
 
 ## Measurement delivery modes
@@ -160,6 +168,22 @@ No new human-facing or drivetrain update shall be delivered until the next X-but
 A displayed snapshot may remain visible until the next snapshot, but it shall be labeled as a snapshot and retain its original capture timestamp. A future drivetrain consumer shall receive a snapshot as one timestamped update, not as a continuously fresh measurement.
 
 Both human-facing output and future drivetrain consumers shall receive updates from the same delivery-mode decision.
+
+### Drivetrain use
+
+The periodic measurement frequency shall limit vision measurement delivery, not drivetrain control execution.
+
+The drivetrain shall run its controller on every scheduled drivetrain cycle. A periodic vision update shall replace or correct the controller's latest target-relative estimate.
+
+The drivetrain shall use the measurement capture timestamp when it evaluates measurement age and motion since capture. The publication timestamp shall not replace the capture timestamp.
+
+The drivetrain shall ignore a camera result that it has already consumed. A repeated camera timestamp shall not appear as a new measurement.
+
+The configured periodic frequency for closed-loop alignment shall be chosen from measured camera frame rate, vision latency, robot speed, and control performance. A frequency selected only for readable console output shall not limit drivetrain vision updates.
+
+The console may render less often than measurement updates are delivered. Console throttling shall not reduce the update rate available to the drivetrain.
+
+In `SNAPSHOT` mode, a future drivetrain may use one snapshot to establish a fixed goal only if another robot-state source maintains that goal afterward. The drivetrain shall not treat a retained snapshot transform as live vision feedback.
 
 ---
 
@@ -703,6 +727,12 @@ The resulting robot-to-tag relationship shall use the same camera-to-tag measure
 
 Robot integration shall therefore not require replacement of the core vision measurement system.
 
+Every camera-to-tag measurement used by robot integration shall retain its camera capture timestamp.
+
+When the robot moves between image capture and measurement use, robot integration shall account for that delay. Odometry and gyro history may be used to move the captured relationship forward to the current control time.
+
+Robot integration shall reject duplicate camera timestamps rather than applying the same measurement more than once.
+
 ---
 
 # 20. Future Swerve Alignment
@@ -725,7 +755,26 @@ The vision layer shall report geometry.
 
 The drivetrain layer shall be responsible for deciding how to move the robot.
 
+The drivetrain controller shall execute independently of the vision delivery frequency. It shall use the newest accepted measurement and its age during each control cycle.
+
+The drivetrain shall not interpret the absence of a new vision frame as a zero error. It shall distinguish a temporarily unchanged estimate from `NO TARGET`, `UNRELIABLE`, and stale data.
+
+Snapshot mode shall be limited to measurement, diagnostics, human guidance, or establishing a fixed goal maintained by odometry and gyro. It shall not directly drive continuing closed-loop alignment from a frozen camera-to-tag transform.
+
 This separation shall be maintained in the architecture.
+
+## 20.1 Drivetrain timing validation
+
+Before closed-loop alignment is enabled, testing shall verify:
+
+* the drivetrain controller continues to execute between vision measurements;
+* periodic vision updates correct the current estimate without changing the drivetrain loop schedule;
+* duplicate camera timestamps do not apply the same measurement twice;
+* measurement age uses capture time rather than publication time;
+* odometry and gyro data account for robot motion between camera updates;
+* target loss, unreliable pose, and stale data select the defined safe drivetrain state;
+* changing the periodic vision frequency does not create delayed-update bursts;
+* snapshot mode cannot feed a retained transform into live closed-loop alignment.
 
 ---
 
@@ -795,9 +844,13 @@ It should be validated using known physical tag orientations before robot use.
 
 Determine whether ambiguity <= 0.20 alone is adequate or whether additional quality gates are needed.
 
-## Delivery Mode
+## Delivery mode
 
 Determine the startup delivery mode, the default periodic update frequency, and which operator control calls the delivery-mode API after startup.
+
+Determine the maximum measurement age allowed during closed-loop drivetrain alignment.
+
+Determine the safe drivetrain response to `NO TARGET`, `UNRELIABLE`, and stale measurements before enabling automatic movement.
 
 ---
 

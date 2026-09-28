@@ -228,6 +228,38 @@ driverController.x().onTrue(
 
 WPILib's `CommandXboxController.x()` names the X button, and `onTrue` schedules only when the trigger changes from false to true. Holding X therefore does not create repeated requests.
 
+### Future drivetrain boundary
+
+The delivery gate produces vision measurement events. It does not schedule drivetrain control or write motor commands.
+
+```text
+MeasurementUpdate events
+          |
+          v
+latest accepted vision estimate and capture time
+          |
+          +--------------------+
+          |                    |
+          v                    v
+odometry and gyro       drivetrain controller
+updates every loop      executes every control loop
+                               |
+                               v
+                         chassis commands
+```
+
+The drivetrain controller runs on its own fixed schedule. It reads the newest accepted vision estimate during each control cycle and uses odometry and gyro data between vision updates.
+
+Only a `VALID` periodic update replaces the drivetrain's current vision estimate. The drivetrain still processes `NO TARGET` and `UNRELIABLE` events so it can stop alignment or select another explicitly tested safe state. It rejects duplicate capture timestamps and stops automatic alignment when the estimate becomes too old.
+
+The maximum measurement age is a drivetrain policy based on robot speed, camera latency, and physical testing. It does not belong in `CameraToTagGeometry`.
+
+Snapshot mode does not provide live closed-loop feedback. A snapshot may establish a fixed goal only after robot code converts it at the capture time and then maintains that goal with odometry and gyro data.
+
+Console rendering has a separate throttle. Slowing console text must not reduce the vision update rate available to the drivetrain.
+
+This boundary follows the same pattern as WPILib pose estimation. WPILib calls encoder and gyro updates every robot loop while accepting timestamped vision measurements at their own rate. See the [`PoseEstimator` API](https://github.wpilib.org/allwpilib/docs/release/java/edu/wpi/first/math/estimator/PoseEstimator.html).
+
 ### PhotonVision boundary
 
 ```java
@@ -297,6 +329,7 @@ This synthesis follows foundational thinking. The transform and result-state typ
 - The console owns display deadbands. The geometry layer keeps raw values for validation.
 - One delivery gate feeds both human and drivetrain consumers. This prevents different consumers from applying different mode rules.
 - Snapshot mode keeps camera acquisition active. This gives an X-button press the latest available measurement without warming up the pipeline after the press.
+- The drivetrain control loop remains independent of vision delivery. This keeps motor output timing stable when the camera rate changes or a target disappears.
 
 ## Alternatives considered
 
@@ -328,6 +361,7 @@ A complete correction would report more than one rotation component and define a
 - How does the operator change delivery mode after startup?
 - What display deadband prevents tiny LEFT and RIGHT changes from flickering without hiding raw instability?
 - What maximum frame age becomes unreliable for the chosen camera, processor, and frame rate?
+- What safe drivetrain state follows `NO TARGET`, `UNRELIABLE`, or a stale measurement during automatic alignment?
 - How does the selected PhotonVision 2026 release represent unavailable pose ambiguity?
 - Can one frame contain duplicate detections for the requested fiducial ID, and how should the adapter report that case?
 - Which physical fixture and angle reference will establish the first accuracy tolerances?

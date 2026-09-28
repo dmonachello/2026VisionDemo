@@ -107,6 +107,8 @@ Run camera acquisition and measurement evaluation on every robot loop. Pass each
 
 Send each returned `MeasurementUpdate` to the console. Future drivetrain code consumes the same update object.
 
+Keep console throttling after `MeasurementUpdateGate`. A readable console rate must not reduce the update rate available to a future drivetrain.
+
 The step is complete when robot simulation starts without camera hardware and reports the correct state in both delivery modes.
 
 ## 8. Configure and calibrate the camera
@@ -134,3 +136,20 @@ Use the physical results to set frame-age limits, display deadband, accuracy tol
 Do not add filtering until the raw measurements are characterized.
 
 The startup delivery mode, the default periodic frequency, and the operator control for changing modes remain product decisions.
+
+## 11. Preserve the future drivetrain boundary
+
+Do not call drivetrain control only when a `MeasurementUpdate` arrives. The future drivetrain controller runs every drivetrain cycle and reads the latest accepted vision estimate.
+
+Require `PERIODIC` mode for direct live-vision alignment. Treat `SNAPSHOT` as measurement, diagnostics, human guidance, or an input that establishes a fixed odometry goal.
+
+Before automatic movement is enabled, add tests that prove these behaviors:
+
+- The drivetrain control loop continues between vision updates.
+- Only `VALID` periodic updates replace the current vision estimate.
+- Duplicate camera timestamps are ignored.
+- `NO TARGET`, `UNRELIABLE`, and stale estimates select the defined safe drivetrain state.
+- The controller uses capture time rather than publication time for measurement age.
+- Snapshot mode cannot feed a frozen transform into live closed-loop alignment.
+
+Choose the maximum measurement age and safe drivetrain response through robot testing. Keep both values in drivetrain policy rather than geometry code.

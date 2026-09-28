@@ -10,7 +10,8 @@ The project already has these main components:
 
 - one roboRIO v1;
 - one Orange Pi 5 v1.2;
-- one [Arducam B0332 OV9281 USB camera](https://www.arducam.com/arducam-120fps-global-shutter-usb-camera-board-1mp-720p-ov9281-uvc-webcam-module-with-low-distortion-m12-lens-without-microphones-for-computer-laptop-android-device-and-raspberry-pi.html), marked `UC-844 Rev B`; and
+- one [Arducam B0332 OV9281 USB camera](https://www.arducam.com/arducam-120fps-global-shutter-usb-camera-board-1mp-720p-ov9281-uvc-webcam-module-with-low-distortion-m12-lens-without-microphones-for-computer-laptop-android-device-and-raspberry-pi.html), marked `UC-844 Rev B`;
+- one OpenMesh OM5P-AC radio; and
 - one Xbox controller connected to the Driver Station computer.
 
 Add these parts for the vision installation:
@@ -18,10 +19,12 @@ Add these parts for the vision installation:
 - an industrial-grade microSD card, 8 GB minimum and 16 GB or larger recommended;
 - an Orange Pi 5 heatsink and fan;
 - a PhotonVision-recommended 5 V regulator, such as a Redux Robotics Zinc-V or Pololu S13V30F5;
+- a CTRE Voltage Regulator Module;
+- a center-positive barrel power cable for the OM5P-AC;
 - a locking or mechanically secured USB-C power cable for the Orange Pi;
 - red and black 18 AWG or 20 AWG power wire;
 - a breaker and connection hardware that match the regulator instructions and the current FRC electrical rules;
-- an unmanaged Ethernet switch and its required power connection;
+- an unmanaged Ethernet switch that accepts one of the CTRE Voltage Regulator Module output voltages;
 - three short Ethernet cables for the radio, the roboRIO, and the Orange Pi;
 - the USB cable supplied with the Arducam;
 - nonconductive standoffs and fasteners for the Orange Pi;
@@ -40,24 +43,26 @@ Calibration and measurement work also needs:
 - a tape measure; and
 - a level or angle reference for the physical validation fixture.
 
-The radio, robot battery, main breaker, and PDP or PDH are part of the robot control system rather than the vision kit. They must be present for an on-robot installation.
+The robot battery, main breaker, and PDP or PDH are part of the robot control system rather than the vision kit. They must be present for an on-robot installation.
 
 ## Use this connection layout
 
 ```text
-Robot battery
+12 V power source
      |
      v
 Main breaker
      |
      v
-PDP or PDH
+PDP, PDH, or portable fused distribution
      |
      +-----------------------> roboRIO power input
      |
      +-- breaker --> 5 V regulator --> secured USB-C --> Orange Pi 5
      |
-     +-- breaker or approved supply -----------------> Ethernet switch
+     +-- breaker --> CTRE VRM -- 12 V, 2 A --> OM5P-AC
+                              |
+                              +-- matching output --> Ethernet switch
 
 Arducam B0332 -- USB 2.0 --> Orange Pi 5
 
@@ -68,6 +73,8 @@ Xbox controller -- USB --> Driver Station computer -- radio link --> robot
 ```
 
 The Xbox controller does not connect to the roboRIO or Orange Pi. The Driver Station computer reads the X button and sends controller state through the normal FRC control link.
+
+For the motor-free portable system, a fused 12.8 V LiFePO4 battery can replace the FRC battery, main breaker, and PDP or PDH. Connect the battery to a master fuse and switch, then to a small fused distribution block. The roboRIO, Orange Pi regulator, and CTRE Voltage Regulator Module each get a separate branch.
 
 ## Prepare the Orange Pi
 
@@ -142,20 +149,36 @@ PhotonVision matches USB cameras partly by physical port. Moving the camera to a
 
 The external trigger pins on the B0332 are not used. PhotonVision receives the normal free-running UVC camera stream.
 
+## Power the OM5P-AC and Ethernet switch
+
+The OM5P-AC requires regulated 12 V power. Do not connect its barrel jack directly to the portable battery, which reaches about 14.6 V at full charge.
+
+1. Connect the CTRE Voltage Regulator Module input to its own fused power branch.
+2. Connect one regulated `12 V, 2 A` output to the OM5P-AC barrel jack.
+3. Confirm that the barrel connector is center-positive.
+4. Secure the barrel connector so movement cannot interrupt radio power.
+5. Check the Ethernet switch input label.
+6. Connect the switch to a CTRE Voltage Regulator Module output with the same voltage and enough current capacity.
+7. Do not connect a 5 V switch to a 12 V output.
+
+The switch model is not selected yet. Choose one that operates from an available regulated output and remains within that output's current rating.
+
+WPILib specifies a CTRE Voltage Regulator Module `12 V, 2 A` output for the OM5P-AC. See [Using the OpenMesh OM5P radio](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/openmesh.html).
+
 ## Connect the network
 
 Use the Ethernet switch as the center of the robot network:
 
 1. Connect the roboRIO Ethernet port to the switch.
 2. Connect the Orange Pi Ethernet port to the switch.
-3. Connect the robot radio to the switch.
-4. Power the switch from an approved robot power connection.
+3. Connect the OM5P-AC port closest to its power jack to the switch.
+4. Power the switch from the matching regulated output described above.
 5. Secure every Ethernet cable close to its connector.
 6. Label both ends of each cable.
 
 Do not feed Power over Ethernet into the Orange Pi Ethernet port. Power the Orange Pi only through the dedicated 5 V regulator connection described above.
 
-If the robot uses a VH-109 radio, turn off radio DIP switches 1 and 2 before connecting the Orange Pi network. PhotonVision warns that the radio's PoE mode can damage a coprocessor. See the [PhotonVision network wiring guide](https://docs.photonvision.org/en/latest/docs/quick-start/networking.html).
+Do not connect the Orange Pi to the OM5P-AC's second Ethernet port. PhotonVision recommends an Ethernet switch with the older OpenMesh radio because the second radio port can cause connection problems. See the [PhotonVision network wiring guide](https://docs.photonvision.org/en/latest/docs/quick-start/networking.html).
 
 ## Perform the first power-up
 
@@ -163,7 +186,7 @@ If the robot uses a VH-109 radio, turn off radio DIP switches 1 and 2 before con
 2. Confirm that every board is mounted and every cable has strain relief.
 3. Confirm that the Orange Pi fan can turn freely.
 4. Confirm the regulator polarity one more time.
-5. Connect the robot battery and turn on the main breaker.
+5. Connect the selected power source and turn on the master switch or main breaker.
 6. Watch the Orange Pi for a normal boot.
 7. Check the switch, roboRIO, and Orange Pi Ethernet link lights.
 8. Confirm that the Orange Pi stays powered while the roboRIO boots.

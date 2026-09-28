@@ -7,8 +7,10 @@ This plan implements the camera-relative measurement system in verifiable steps.
 The project uses this hardware:
 
 - roboRIO v1 for the WPILib robot application;
-- Orange Pi 5 v1.2 for PhotonVision; and
-- Arducam UC-844 Rev B for image capture.
+- Orange Pi 5 v1.2 for PhotonVision;
+- Arducam UC-844 Rev B for image capture;
+- OpenMesh OM5P-AC for the wireless robot network; and
+- an Ethernet switch between the radio, roboRIO, and Orange Pi.
 
 Before camera integration, bench-test power, cooling, USB connectivity, and network communication. Record the operating-system image, PhotonVision version, camera resolution, and network settings.
 

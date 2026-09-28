@@ -46,8 +46,12 @@ Initial implementation target:
 Selected hardware:
 
 * roboRIO v1 as the robot controller;
-* Orange Pi 5 v1.2 as the PhotonVision coprocessor; and
-* Arducam UC-844 Rev B as the camera.
+* Orange Pi 5 v1.2 as the PhotonVision coprocessor;
+* Arducam UC-844 Rev B as the camera;
+* OpenMesh OM5P-AC as the wireless radio; and
+* an Ethernet switch between the radio, roboRIO, and Orange Pi.
+
+The OM5P-AC shall receive regulated 12 V power from a CTRE Voltage Regulator Module `12 V, 2 A` output.
 
 The Arducam UC-844 Rev B shall be calibrated at the resolution used by the PhotonVision AprilTag pipeline.
 
@@ -337,7 +341,7 @@ Square with tag: 14.7 deg RIGHT
 
 This measurement shall be derived from the rotational component of the camera-to-tag transform.
 
-It shall not be implemented by simply reusing target yaw.
+It shall not reuse target yaw.
 
 The mathematical definition and normalization of this measurement must be explicitly documented before implementation is considered complete.
 
@@ -808,11 +812,13 @@ The following remain intentionally unresolved.
 
 ## Hardware
 
-The robot controller, vision coprocessor, and camera are selected:
+The robot controller, vision coprocessor, camera, radio, and radio regulator are selected:
 
 * roboRIO v1;
-* Orange Pi 5 v1.2; and
-* Arducam UC-844 Rev B.
+* Orange Pi 5 v1.2;
+* Arducam UC-844 Rev B;
+* OpenMesh OM5P-AC; and
+* CTRE Voltage Regulator Module for radio power.
 
 Determine through bench testing:
 
@@ -820,8 +826,10 @@ Determine through bench testing:
 * expected frame rate;
 * exposure and gain settings;
 * end-to-end measurement latency;
-* Orange Pi power, cooling, and mounting; and
-* network configuration between the Orange Pi and the roboRIO.
+* Orange Pi power, cooling, and mounting;
+* network configuration between the Orange Pi and the roboRIO;
+* Ethernet switch model and regulated supply output; and
+* portable battery capacity and branch-circuit protection.
 
 Confirm that the selected camera produces acceptable motion blur during handheld and robot-speed movement.
 

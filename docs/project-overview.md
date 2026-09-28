@@ -15,6 +15,7 @@ The selected hardware has a clear split of responsibilities:
 - The Arducam UC-844 Rev B captures images.
 - PhotonVision runs on an Orange Pi 5 v1.2 and turns those images into AprilTag observations.
 - The Java robot application runs on a roboRIO v1 and consumes the observations through PhotonLib.
+- An OM5P-AC radio and an Ethernet switch connect the Driver Station, roboRIO, and Orange Pi.
 
 The team still needs to bench-test the camera resolution, frame rate, latency, exposure, Orange Pi cooling, and network setup. Those measurements will set practical limits on the update frequency and maximum measurement age.
 

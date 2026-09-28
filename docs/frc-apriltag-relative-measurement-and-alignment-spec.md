@@ -753,11 +753,13 @@ Determine whether ambiguity <= 0.20 alone is adequate or whether additional qual
 
 # 23. Immediate Next Step
 
-The next design task is **not implementation**.
+Status: completed in [Phase 1 and Phase 2 geometry](phase-1-2-geometry.md). The module and type decisions are recorded in [Phase 1 and Phase 2 design rationale](phase-1-2-design-rationale.md).
 
-The next task is to define and diagram the geometry used by Phase 1 and Phase 2.
+The next implementation task starts with executable geometry tests. It does not start with camera access.
 
-That work should establish, using several concrete camera/tag arrangements:
+The completed design defines and diagrams the geometry used by Phase 1 and Phase 2.
+
+It establishes these points with concrete camera and tag arrangements:
 
 1. what X, Y and Z mean;
 2. how range is calculated;
@@ -766,4 +768,4 @@ That work should establish, using several concrete camera/tag arrangements:
 5. what happens when the camera is both displaced and rotated;
 6. what output a human should see in each case.
 
-Only after that geometry is unambiguous should this document be converted into a detailed Codex/VS Code implementation specification.
+The geometry is now defined. The worked arrangements should become table-driven tests before PhotonLib or camera hardware is added.

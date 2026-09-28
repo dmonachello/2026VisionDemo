@@ -19,12 +19,11 @@ Add these parts for the vision installation:
 - an industrial-grade microSD card, 8 GB minimum and 16 GB or larger recommended;
 - an Orange Pi 5 heatsink and fan;
 - a PhotonVision-recommended 5 V regulator, such as a Redux Robotics Zinc-V or Pololu S13V30F5;
-- a CTRE Voltage Regulator Module;
 - a center-positive barrel power cable for the OM5P-AC;
 - a locking or mechanically secured USB-C power cable for the Orange Pi;
 - red and black 18 AWG or 20 AWG power wire;
 - a breaker and connection hardware that match the regulator instructions and the current FRC electrical rules;
-- an unmanaged Ethernet switch that accepts one of the CTRE Voltage Regulator Module output voltages;
+- an unmanaged Ethernet switch with a documented input range that matches its power branch;
 - three short Ethernet cables for the radio, the roboRIO, and the Orange Pi;
 - the USB cable supplied with the Arducam;
 - nonconductive standoffs and fasteners for the Orange Pi;
@@ -60,9 +59,9 @@ PDP, PDH, or portable fused distribution
      |
      +-- breaker --> 5 V regulator --> secured USB-C --> Orange Pi 5
      |
-     +-- breaker --> CTRE VRM -- 12 V, 2 A --> OM5P-AC
-                              |
-                              +-- matching output --> Ethernet switch
+     +-- fuse -------------------------------> OM5P-AC
+     |
+     +-- fuse --> regulator if required -----> Ethernet switch
 
 Arducam B0332 -- USB 2.0 --> Orange Pi 5
 
@@ -74,7 +73,7 @@ Xbox controller -- USB --> Driver Station computer -- radio link --> robot
 
 The Xbox controller does not connect to the roboRIO or Orange Pi. The Driver Station computer reads the X button and sends controller state through the normal FRC control link.
 
-For the motor-free portable system, a fused 12.8 V LiFePO4 battery can replace the FRC battery, main breaker, and PDP or PDH. Connect the battery to a master fuse and switch, then to a small fused distribution block. The roboRIO, Orange Pi regulator, and CTRE Voltage Regulator Module each get a separate branch.
+For the motor-free portable system, a fused 12.8 V LiFePO4 battery can replace the FRC battery, main breaker, and PDP or PDH. Connect the battery to a master fuse and switch, then to a small fused distribution block. The roboRIO, Orange Pi regulator, OM5P-AC, and Ethernet switch each get a separate branch.
 
 ## Prepare the Orange Pi
 
@@ -151,19 +150,20 @@ The external trigger pins on the B0332 are not used. PhotonVision receives the n
 
 ## Power the OM5P-AC and Ethernet switch
 
-The OM5P-AC requires regulated 12 V power. Do not connect its barrel jack directly to the portable battery, which reaches about 14.6 V at full charge.
+Published OM5P-AC specifications list 12 V to 24 V DC power options. The 12.8 V LiFePO4 battery remains within that range from its normal operating voltage through its 14.6 V full-charge voltage.
 
-1. Connect the CTRE Voltage Regulator Module input to its own fused power branch.
-2. Connect one regulated `12 V, 2 A` output to the OM5P-AC barrel jack.
-3. Confirm that the barrel connector is center-positive.
-4. Secure the barrel connector so movement cannot interrupt radio power.
-5. Check the Ethernet switch input label.
-6. Connect the switch to a CTRE Voltage Regulator Module output with the same voltage and enough current capacity.
-7. Do not connect a 5 V switch to a 12 V output.
+1. Connect a fused battery branch to the OM5P-AC barrel jack.
+2. Confirm that the barrel connector is center-positive.
+3. Secure the barrel connector so movement cannot interrupt radio power.
+4. Add a battery monitor or low-voltage alarm.
+5. Stop using the battery before its loaded voltage falls below the radio's 12 V minimum.
+6. Check the Ethernet switch input label.
+7. If the switch accepts the battery's full voltage range, connect it to its own fused branch.
+8. If the switch does not accept that range, power it through a matching regulator.
 
-The switch model is not selected yet. Choose one that operates from an available regulated output and remains within that output's current rating.
+The switch model is not selected yet. A switch that accepts at least 12 V to 15 V can run directly from this battery. A 5 V switch requires a 5 V regulator.
 
-WPILib specifies a CTRE Voltage Regulator Module `12 V, 2 A` output for the OM5P-AC. See [Using the OpenMesh OM5P radio](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-3/openmesh.html).
+The OM5P-AC manufacturer data lists both 12 V and 24 V power supplies. The [AndyMark OM5P-AC specifications](https://www.andymark.com/products/open-mesh-om5p-ac-dual-band-1-17-gbps-access-point-radio) list a 12 V to 24 V DC input range. WPILib recommends a regulated `12 V, 2 A` supply on a competition robot because drivetrain loads cause large battery-voltage drops. That protection is optional on this motor-free system.
 
 ## Connect the network
 
@@ -172,7 +172,7 @@ Use the Ethernet switch as the center of the robot network:
 1. Connect the roboRIO Ethernet port to the switch.
 2. Connect the Orange Pi Ethernet port to the switch.
 3. Connect the OM5P-AC port closest to its power jack to the switch.
-4. Power the switch from the matching regulated output described above.
+4. Power the switch from the protected branch described above.
 5. Secure every Ethernet cable close to its connector.
 6. Label both ends of each cable.
 

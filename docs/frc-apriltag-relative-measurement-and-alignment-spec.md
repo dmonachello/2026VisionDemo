@@ -51,7 +51,7 @@ Selected hardware:
 * OpenMesh OM5P-AC as the wireless radio; and
 * an Ethernet switch between the radio, roboRIO, and Orange Pi.
 
-The OM5P-AC shall receive regulated 12 V power from a CTRE Voltage Regulator Module `12 V, 2 A` output.
+In the motor-free portable configuration, the OM5P-AC may receive direct protected power from the 12.8 V LiFePO4 battery. The battery's operating range remains within the radio's published 12 V to 24 V DC input range.
 
 The Arducam UC-844 Rev B shall be calibrated at the resolution used by the PhotonVision AprilTag pipeline.
 
@@ -812,13 +812,12 @@ The following remain intentionally unresolved.
 
 ## Hardware
 
-The robot controller, vision coprocessor, camera, radio, and radio regulator are selected:
+The robot controller, vision coprocessor, camera, and radio are selected:
 
 * roboRIO v1;
 * Orange Pi 5 v1.2;
 * Arducam UC-844 Rev B;
-* OpenMesh OM5P-AC; and
-* CTRE Voltage Regulator Module for radio power.
+* OpenMesh OM5P-AC.
 
 Determine through bench testing:
 
@@ -828,7 +827,7 @@ Determine through bench testing:
 * end-to-end measurement latency;
 * Orange Pi power, cooling, and mounting;
 * network configuration between the Orange Pi and the roboRIO;
-* Ethernet switch model and regulated supply output; and
+* Ethernet switch model and power connection; and
 * portable battery capacity and branch-circuit protection.
 
 Confirm that the selected camera produces acceptable motion blur during handheld and robot-speed movement.

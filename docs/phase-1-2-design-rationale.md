@@ -44,7 +44,7 @@ Transform3d robotToTag =
 
 ## Shape
 
-The design has four ownership boundaries:
+The design has five ownership boundaries:
 
 ```text
 PhotonSelectedTagMeasurer
@@ -57,6 +57,10 @@ RelativeTagGeometry
              v
 TagMeasurement
   owns VALID, NO_TARGET, and UNRELIABLE state
+             |
+             v
+MeasurementUpdateGate
+  owns CONTINUOUS and SNAPSHOT delivery decisions
              |
              v
 TagMeasurementConsole
@@ -147,6 +151,67 @@ The result family is intentionally asymmetric. Only the valid variant exposes `R
 
 A no-target result has no transform. This makes stale actionable guidance unrepresentable in the current result.
 
+### Delivery modes
+
+The delivery mode is a small state machine. It sits after measurement and validity so both modes use identical geometry and quality policy.
+
+```java
+package frc.robot.vision.delivery;
+
+public enum MeasurementDeliveryMode {
+  CONTINUOUS,
+  SNAPSHOT
+}
+
+public record MeasurementUpdate(
+    long sequenceNumber,
+    double publicationTimestampSeconds,
+    MeasurementDeliveryMode mode,
+    TagMeasurement measurement) {}
+
+public final class MeasurementUpdateGate {
+  public void setDeliveryMode(MeasurementDeliveryMode mode) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  public MeasurementDeliveryMode deliveryMode() {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  public void requestSnapshot() {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  public Optional<MeasurementUpdate> update(
+      TagMeasurement latestMeasurement,
+      boolean isNewCameraResult,
+      double nowSeconds) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+}
+```
+
+`CONTINUOUS` emits one `MeasurementUpdate` when `isNewCameraResult` is true. Repeated robot loops over the same camera result emit nothing.
+
+`SNAPSHOT` emits one `MeasurementUpdate` after `requestSnapshot()`. The update contains the current measurement state, including `NO TARGET` or `UNRELIABLE`. The request is consumed after one update.
+
+`setDeliveryMode` is the public API for changing modes. `deliveryMode` reports the active mode to diagnostics and user interfaces.
+
+`setDeliveryMode` is idempotent and does not publish by itself. Switching modes clears any pending snapshot request. Switching to `SNAPSHOT` waits for the next X-button press. Switching to `CONTINUOUS` waits for the next new camera result.
+
+`requestSnapshot` has no effect outside `SNAPSHOT` mode. A request made in continuous mode cannot produce a delayed snapshot after a later mode change.
+
+The measurement capture timestamp remains inside `TagMeasurement`. `MeasurementUpdate` adds the publication timestamp and a sequence number. A console can keep a snapshot on screen, but a drivetrain sees one event with its original age.
+
+The Xbox controller binding produces the snapshot request on the X-button rising edge:
+
+```java
+driverController.x().onTrue(
+    Commands.runOnce(measurementUpdateGate::requestSnapshot));
+```
+
+WPILib's `CommandXboxController.x()` names the X button, and `onTrue` schedules only when the trigger changes from false to true. Holding X therefore does not create repeated requests.
+
 ### PhotonVision boundary
 
 ```java
@@ -175,13 +240,15 @@ The first implementation does not need a generic camera-provider interface. Ther
 package frc.robot.vision.console;
 
 public final class TagMeasurementConsole {
-  public void show(TagMeasurement measurement) {
+  public void show(MeasurementUpdate update) {
     throw new UnsupportedOperationException("not implemented");
   }
 }
 ```
 
-The console converts meters to inches and radians to degrees. It chooses LEFT, RIGHT, FORWARD, BACK, UP, and DOWN from the unrounded sign. It never reuses a previous valid result after `NO TARGET` or `UNRELIABLE`.
+The console converts meters to inches and radians to degrees. It chooses LEFT, RIGHT, FORWARD, BACK, UP, and DOWN from the unrounded sign. In snapshot mode, it labels retained output as a snapshot and shows the capture time or age.
+
+Both the console and any future drivetrain consumer subscribe to `MeasurementUpdate`. Neither consumer implements its own continuous or snapshot logic.
 
 ## Synthesis decision
 
@@ -199,6 +266,8 @@ The final design also keeps two choices from the future-robot design:
 - Only the valid result exposes actionable geometry.
 - The complete `Transform3d` remains available for direct Phase 3 composition.
 
+The delivery state machine applies the model-the-domain principle. One gate owns mode, pending snapshot state, and publication sequence. Console and drivetrain code do not duplicate mode checks.
+
 The design rejects speculative Phase 3 types, drivetrain APIs, and a separate transport-health state. Those decisions need hardware and PhotonLib timing data.
 
 This synthesis follows foundational thinking. The transform and result-state types become the stable base, while hardware policy remains changeable.
@@ -210,6 +279,8 @@ This synthesis follows foundational thinking. The transform and result-state typ
 - Horizontal means camera-local horizontal. Gravity-relative guidance would require another sensor or a fixed mount.
 - Undefined projections make the observation unreliable. Returning zero would present an arbitrary angle as alignment.
 - The console owns display deadbands. The geometry layer keeps raw values for validation.
+- One delivery gate feeds both human and drivetrain consumers. This prevents different consumers from applying different mode rules.
+- Snapshot mode keeps camera acquisition active. This gives an X-button press the latest available measurement without warming up the pipeline after the press.
 
 ## Alternatives considered
 
@@ -236,6 +307,8 @@ A complete correction would report more than one rotation component and define a
 ## Open questions and risks
 
 - Should the console say `Square horizontally with tag` after operator testing?
+- Which delivery mode is active at startup?
+- How does the operator change delivery mode after startup?
 - What display deadband prevents tiny LEFT and RIGHT changes from flickering without hiding raw instability?
 - What maximum frame age becomes unreliable for the chosen camera, processor, and frame rate?
 - How does the selected PhotonVision 2026 release represent unavailable pose ambiguity?

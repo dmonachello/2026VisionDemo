@@ -115,6 +115,38 @@ The desired pose may include:
 
 Automatic drivetrain control is explicitly outside the scope of Phases 1 and 2.
 
+## Measurement delivery modes
+
+The system shall support `CONTINUOUS` and `SNAPSHOT` delivery modes.
+
+The selected mode controls when a measurement update is delivered to the human-facing output or a future drivetrain consumer. It does not change camera acquisition, target selection, geometry, or validity rules.
+
+The measurement component shall expose an API call that accepts either delivery mode. It shall also expose the active mode for diagnostics and user interfaces.
+
+Setting the active mode again shall have no effect. Changing modes shall not publish a measurement or trigger a snapshot by itself.
+
+### CONTINUOUS
+
+The system shall deliver an update for each new processed camera result.
+
+The system shall not treat repeated robot loops over the same camera result as new measurement updates.
+
+### SNAPSHOT
+
+The camera and measurement pipeline shall continue to run while the system waits for a snapshot request.
+
+Pressing the X button on the configured Xbox controller shall deliver one update containing the current measurement state. The update may be `VALID`, `NO TARGET`, or `UNRELIABLE`.
+
+The X button shall act on its rising edge. Holding the button shall not produce repeated updates.
+
+An X-button press outside `SNAPSHOT` mode shall have no effect and shall not remain queued for a later mode change.
+
+No new human-facing or drivetrain update shall be delivered until the next X-button press.
+
+A displayed snapshot may remain visible until the next snapshot, but it shall be labeled as a snapshot and retain its original capture timestamp. A future drivetrain consumer shall receive a snapshot as one timestamped update, not as a continuously fresh measurement.
+
+Both human-facing output and future drivetrain consumers shall receive updates from the same delivery-mode decision.
+
 ---
 
 # 5. PhotonVision Coordinate System
@@ -748,6 +780,10 @@ It should be validated using known physical tag orientations before robot use.
 ## Validity
 
 Determine whether ambiguity <= 0.20 alone is adequate or whether additional quality gates are needed.
+
+## Delivery Mode
+
+Determine the startup delivery mode and which operator control calls the delivery-mode API after startup.
 
 ---
 

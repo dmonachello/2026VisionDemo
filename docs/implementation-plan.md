@@ -2,6 +2,16 @@
 
 This plan implements the camera-relative measurement system in verifiable steps. Each step ends with an automated or physical check.
 
+## Hardware baseline
+
+The project uses this hardware:
+
+- roboRIO v1 for the WPILib robot application;
+- Orange Pi 5 v1.2 for PhotonVision; and
+- Arducam UC-844 Rev B for image capture.
+
+Before camera integration, bench-test power, cooling, USB connectivity, and network communication. Record the operating-system image, PhotonVision version, camera resolution, and network settings.
+
 ## 1. Build the geometry core
 
 Create these classes under `src/main/java/frc/robot/vision/geometry`:
@@ -113,11 +123,11 @@ The step is complete when robot simulation starts without camera hardware and re
 
 ## 8. Configure and calibrate the camera
 
-Configure the AprilTag pipeline and enable single-tag 3D pose estimation. Calibrate the exact physical camera at the operating resolution.
+Connect the Arducam UC-844 Rev B to the Orange Pi 5 v1.2. Configure the PhotonVision AprilTag pipeline and enable single-tag 3D pose estimation. Calibrate the camera at the operating resolution.
 
-Record the camera name, resolution, tag family, pipeline settings, and calibration identity.
+Record the camera revision, resolution, tag family, pipeline settings, calibration identity, frame rate, and measured latency.
 
-The step is complete when PhotonVision publishes the requested tag's 3D transform to the Java application.
+The step is complete when PhotonVision on the Orange Pi publishes the requested tag's 3D transform to the Java application on the roboRIO.
 
 ## 9. Validate physical geometry
 

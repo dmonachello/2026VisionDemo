@@ -43,9 +43,13 @@ Initial implementation target:
 * PhotonLib
 * AprilTags
 
-Camera and PhotonVision coprocessor hardware are TBD.
+Selected hardware:
 
-The camera must support calibration suitable for PhotonVision 3D AprilTag pose estimation.
+* roboRIO v1 as the robot controller;
+* Orange Pi 5 v1.2 as the PhotonVision coprocessor; and
+* Arducam UC-844 Rev B as the camera.
+
+The Arducam UC-844 Rev B shall be calibrated at the resolution used by the PhotonVision AprilTag pipeline.
 
 ---
 
@@ -511,7 +515,7 @@ The validation program shall therefore test:
 
 Camera exposure and gain shall be tuned to minimize motion blur while retaining reliable AprilTag detection.
 
-A global-shutter camera is preferred for eventual hardware selection unless testing demonstrates that another camera is adequate.
+Testing shall confirm that the Arducam UC-844 Rev B produces acceptable results during robot-speed motion. If motion blur prevents the required accuracy, the camera selection shall be revisited.
 
 Filtering shall not initially be used to disguise poor raw measurements.
 
@@ -804,14 +808,22 @@ The following remain intentionally unresolved.
 
 ## Hardware
 
-Select:
+The robot controller, vision coprocessor, and camera are selected:
 
-* camera;
-* PhotonVision processor/coprocessor;
-* resolution;
-* expected frame rate.
+* roboRIO v1;
+* Orange Pi 5 v1.2; and
+* Arducam UC-844 Rev B.
 
-A global-shutter camera is preferred for investigation.
+Determine through bench testing:
+
+* camera resolution;
+* expected frame rate;
+* exposure and gain settings;
+* end-to-end measurement latency;
+* Orange Pi power, cooling, and mounting; and
+* network configuration between the Orange Pi and the roboRIO.
+
+Confirm that the selected camera produces acceptable motion blur during handheld and robot-speed movement.
 
 ## Accuracy
 

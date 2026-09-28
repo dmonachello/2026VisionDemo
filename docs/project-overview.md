@@ -8,6 +8,16 @@ That progression is deliberate. A bad distance on a console does not move hardwa
 
 The project uses Java, WPILib, PhotonVision, and PhotonLib.
 
+## The hardware
+
+The selected hardware has a clear split of responsibilities:
+
+- The Arducam UC-844 Rev B captures images.
+- PhotonVision runs on an Orange Pi 5 v1.2 and turns those images into AprilTag observations.
+- The Java robot application runs on a roboRIO v1 and consumes the observations through PhotonLib.
+
+The team still needs to bench-test the camera resolution, frame rate, latency, exposure, Orange Pi cooling, and network setup. Those measurements will set practical limits on the update frequency and maximum measurement age.
+
 ## What the robot needs to know
 
 Detecting an AprilTag is not enough. To approach a field element, the robot needs to know:
@@ -90,7 +100,7 @@ The first quality check uses PhotonVision's pose ambiguity. Testing may uncover 
 
 ## Where the project stands
 
-The repository contains the WPILib project, PhotonLib dependency, requirements, geometry contract, design rationale, and implementation plan. The vision measurement and delivery code is not written yet.
+The repository contains the WPILib project, PhotonLib dependency, requirements, geometry contract, design rationale, and implementation plan. The hardware is selected. The vision measurement and delivery code is not written yet.
 
 The next task is to write table-driven tests for the camera-to-tag geometry. Those tests define the expected signs and angles before PhotonVision or camera hardware enters the code path.
 

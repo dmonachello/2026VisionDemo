@@ -106,6 +106,7 @@ The next task is to write table-driven tests for the camera-to-tag geometry. Tho
 
 ## Detailed documents
 
+- [Hardware installation](hardware-installation.md)
 - [Requirements and design specification](frc-apriltag-relative-measurement-and-alignment-spec.md)
 - [Implementation plan](implementation-plan.md)
 - [Phase 1 and Phase 2 geometry](phase-1-2-geometry.md)

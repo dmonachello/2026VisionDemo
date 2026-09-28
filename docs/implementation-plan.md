@@ -12,6 +12,8 @@ The project uses this hardware:
 
 Before camera integration, bench-test power, cooling, USB connectivity, and network communication. Record the operating-system image, PhotonVision version, camera resolution, and network settings.
 
+Follow [Install the vision hardware](hardware-installation.md) for the parts list, mounting, power wiring, network wiring, camera connection, and first power-up.
+
 ## 1. Build the geometry core
 
 Create these classes under `src/main/java/frc/robot/vision/geometry`:

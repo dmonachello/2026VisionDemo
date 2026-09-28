@@ -43,11 +43,18 @@ MeasurementUpdateGate.java
 
 Implement these rules:
 
-- `setDeliveryMode(CONTINUOUS)` and `setDeliveryMode(SNAPSHOT)` change the active mode through the public API.
+- `setDeliveryMode(PERIODIC)` and `setDeliveryMode(SNAPSHOT)` change the active mode through the public API.
 - `deliveryMode()` reports the active mode.
 - Setting the active mode again has no effect.
-- `CONTINUOUS` emits once for each new processed camera result.
+- `setPeriodicUpdateFrequencyHz(double)` accepts only finite values greater than zero.
+- `periodicUpdateFrequencyHz()` reports the configured value.
+- Setting the current periodic frequency again has no effect.
+- Changing the frequency in snapshot mode stores it without emitting an update.
+- Changing the frequency in periodic mode resets the schedule and makes the next new camera result eligible immediately.
+- `PERIODIC` emits newly processed camera results at no more than the configured frequency.
+- The effective periodic rate cannot exceed the camera frame rate, robot loop rate, or processing rate.
 - Repeated robot loops over the same camera result emit nothing.
+- Missed periodic deadlines do not produce catch-up bursts.
 - `SNAPSHOT` emits nothing until it receives a snapshot request.
 - One snapshot request emits one current result.
 - The request is consumed after that update.
@@ -55,7 +62,7 @@ Implement these rules:
 - Changing modes clears pending snapshot state and does not emit an update.
 - Every emitted update has a sequence number and publication timestamp.
 
-Add state-machine tests for the mode API, repeated loops, repeated requests, and all three measurement states.
+Add state-machine tests for the mode API, repeated loops, repeated requests, and all three measurement states. Cover zero, negative, nonfinite, unchanged, and changed frequency values. Use a fake monotonic clock to test exact deadlines and missed-deadline behavior.
 
 The step is complete when the state-machine tests prove that holding the snapshot input cannot repeat an update.
 
@@ -65,7 +72,7 @@ Create `PhotonSelectedTagMeasurer` under `src/main/java/frc/robot/vision/photon`
 
 The adapter reads complete PhotonVision results, selects only the requested ID, records diagnostics, applies the measurement policy, and calls the pure geometry solver.
 
-Expose whether the adapter processed a new camera result. The delivery gate uses that fact in continuous mode.
+Expose whether the adapter processed a new camera result. The delivery gate uses that fact in periodic mode.
 
 The step is complete when synthetic PhotonVision observations produce the expected measurement state and geometry.
 
@@ -77,7 +84,7 @@ The console consumes `MeasurementUpdate`, not the raw camera result. It owns inc
 
 Snapshot output displays its capture time or age and remains labeled as a snapshot while retained on screen.
 
-The step is complete when output tests cover continuous, snapshot, no-target, and unreliable updates.
+The step is complete when output tests cover periodic, snapshot, no-target, and unreliable updates.
 
 ## 6. Wire the Xbox X button
 
@@ -114,7 +121,7 @@ The step is complete when PhotonVision publishes the requested tag's 3D transfor
 
 Test centered, laterally displaced, vertically displaced, rotated, combined, and handheld arrangements. Record ground truth and raw diagnostic data without filtering.
 
-Test both delivery modes. Continuous mode must follow new camera results. Snapshot mode must remain unchanged between X-button presses.
+Test both delivery modes. Periodic mode must obey its configured maximum frequency and publish only new camera results. Snapshot mode must remain unchanged between X-button presses.
 
 Verify directions before setting accuracy tolerances.
 
@@ -126,4 +133,4 @@ Use the physical results to set frame-age limits, display deadband, accuracy tol
 
 Do not add filtering until the raw measurements are characterized.
 
-The startup delivery mode and the operator control for changing modes remain product decisions.
+The startup delivery mode, the default periodic frequency, and the operator control for changing modes remain product decisions.

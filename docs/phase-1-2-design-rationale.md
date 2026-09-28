@@ -60,7 +60,7 @@ TagMeasurement
              |
              v
 MeasurementUpdateGate
-  owns CONTINUOUS and SNAPSHOT delivery decisions
+  owns PERIODIC and SNAPSHOT delivery decisions
              |
              v
 TagMeasurementConsole
@@ -159,7 +159,7 @@ The delivery mode is a small state machine. It sits after measurement and validi
 package frc.robot.vision.delivery;
 
 public enum MeasurementDeliveryMode {
-  CONTINUOUS,
+  PERIODIC,
   SNAPSHOT
 }
 
@@ -178,6 +178,14 @@ public final class MeasurementUpdateGate {
     throw new UnsupportedOperationException("not implemented");
   }
 
+  public void setPeriodicUpdateFrequencyHz(double frequencyHz) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  public double periodicUpdateFrequencyHz() {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
   public void requestSnapshot() {
     throw new UnsupportedOperationException("not implemented");
   }
@@ -191,15 +199,23 @@ public final class MeasurementUpdateGate {
 }
 ```
 
-`CONTINUOUS` emits one `MeasurementUpdate` when `isNewCameraResult` is true. Repeated robot loops over the same camera result emit nothing.
+`PERIODIC` emits newly processed camera results at no more than `periodicUpdateFrequencyHz()`. Repeated robot loops over the same camera result emit nothing.
+
+The periodic frequency must be finite and greater than zero. An invalid value fails at the API boundary. Setting the current value again has no effect.
+
+The API accepts a new periodic frequency in either mode. Snapshot mode stores it for later. Changing it during periodic mode resets the schedule, and the first new camera result is eligible immediately. Setting the same value does not reset the schedule.
+
+The frequency is a maximum rate. The gate cannot deliver faster than the camera, robot loop, or measurement processing. If no new camera result exists at a scheduled time, the gate emits nothing. It never changes a capture timestamp or repeats an old result to make the requested rate appear achievable.
+
+The scheduler emits at most one update per robot loop. If execution falls behind, it continues from the current time and does not emit delayed updates in a burst.
 
 `SNAPSHOT` emits one `MeasurementUpdate` after `requestSnapshot()`. The update contains the current measurement state, including `NO TARGET` or `UNRELIABLE`. The request is consumed after one update.
 
 `setDeliveryMode` is the public API for changing modes. `deliveryMode` reports the active mode to diagnostics and user interfaces.
 
-`setDeliveryMode` is idempotent and does not publish by itself. Switching modes clears any pending snapshot request. Switching to `SNAPSHOT` waits for the next X-button press. Switching to `CONTINUOUS` waits for the next new camera result.
+`setDeliveryMode` is idempotent and does not publish by itself. Switching modes clears any pending snapshot request. Switching to `SNAPSHOT` waits for the next X-button press. The first new camera result after switching to `PERIODIC` is eligible immediately. Later updates obey the configured interval.
 
-`requestSnapshot` has no effect outside `SNAPSHOT` mode. A request made in continuous mode cannot produce a delayed snapshot after a later mode change.
+`requestSnapshot` has no effect outside `SNAPSHOT` mode. A request made in periodic mode cannot produce a delayed snapshot after a later mode change.
 
 The measurement capture timestamp remains inside `TagMeasurement`. `MeasurementUpdate` adds the publication timestamp and a sequence number. A console can keep a snapshot on screen, but a drivetrain sees one event with its original age.
 
@@ -248,7 +264,7 @@ public final class TagMeasurementConsole {
 
 The console converts meters to inches and radians to degrees. It chooses LEFT, RIGHT, FORWARD, BACK, UP, and DOWN from the unrounded sign. In snapshot mode, it labels retained output as a snapshot and shows the capture time or age.
 
-Both the console and any future drivetrain consumer subscribe to `MeasurementUpdate`. Neither consumer implements its own continuous or snapshot logic.
+Both the console and any future drivetrain consumer subscribe to `MeasurementUpdate`. Neither consumer implements its own periodic or snapshot logic.
 
 ## Synthesis decision
 
@@ -308,6 +324,7 @@ A complete correction would report more than one rotation component and define a
 
 - Should the console say `Square horizontally with tag` after operator testing?
 - Which delivery mode is active at startup?
+- What periodic update frequency is active at startup?
 - How does the operator change delivery mode after startup?
 - What display deadband prevents tiny LEFT and RIGHT changes from flickering without hiding raw instability?
 - What maximum frame age becomes unreliable for the chosen camera, processor, and frame rate?

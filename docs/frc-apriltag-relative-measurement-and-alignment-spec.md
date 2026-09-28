@@ -117,19 +117,33 @@ Automatic drivetrain control is explicitly outside the scope of Phases 1 and 2.
 
 ## Measurement delivery modes
 
-The system shall support `CONTINUOUS` and `SNAPSHOT` delivery modes.
+The system shall support `PERIODIC` and `SNAPSHOT` delivery modes.
 
 The selected mode controls when a measurement update is delivered to the human-facing output or a future drivetrain consumer. It does not change camera acquisition, target selection, geometry, or validity rules.
 
-The measurement component shall expose an API call that accepts either delivery mode. It shall also expose the active mode for diagnostics and user interfaces.
+The measurement component shall expose `setDeliveryMode(MeasurementDeliveryMode)` to select either mode and `deliveryMode()` to report the active mode.
 
 Setting the active mode again shall have no effect. Changing modes shall not publish a measurement or trigger a snapshot by itself.
 
-### CONTINUOUS
+### PERIODIC
 
-The system shall deliver an update for each new processed camera result.
+The measurement component shall expose `setPeriodicUpdateFrequencyHz(double)` and `periodicUpdateFrequencyHz()` to set and read the periodic update frequency in hertz.
+
+The configured frequency shall be finite and greater than zero.
+
+The frequency API shall be available in either delivery mode. Changing the frequency in `SNAPSHOT` mode shall store the value without publishing an update.
+
+Changing the frequency in `PERIODIC` mode shall reset the periodic schedule. The first new camera result after the change shall be eligible immediately. Setting the current frequency again shall not reset the schedule.
+
+`PERIODIC` shall deliver new processed camera results at no more than the configured frequency.
+
+The configured frequency is a maximum delivery rate. The effective rate may be lower because it is limited by the camera frame rate, the robot loop rate, and processing time.
 
 The system shall not treat repeated robot loops over the same camera result as new measurement updates.
+
+The system shall not repeat an old camera result to meet the configured frequency. Every periodic update shall contain a newly processed camera result.
+
+If execution falls behind the requested schedule, the system shall resume from the current time. It shall not emit a burst of delayed updates.
 
 ### SNAPSHOT
 
@@ -783,7 +797,7 @@ Determine whether ambiguity <= 0.20 alone is adequate or whether additional qual
 
 ## Delivery Mode
 
-Determine the startup delivery mode and which operator control calls the delivery-mode API after startup.
+Determine the startup delivery mode, the default periodic update frequency, and which operator control calls the delivery-mode API after startup.
 
 ---
 

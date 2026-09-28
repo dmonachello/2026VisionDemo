@@ -316,13 +316,13 @@ Only a `VALID` result exposes actionable distances and corrections. `NO TARGET` 
 
 ## Delivery modes do not change geometry
 
-`CONTINUOUS` and `SNAPSHOT` control when consumers receive a `TagMeasurement`. Both modes use the same target selection, validity rules, and geometry formulas.
+`PERIODIC` and `SNAPSHOT` control when consumers receive a `TagMeasurement`. Both modes use the same target selection, validity rules, and geometry formulas.
 
-The public `setDeliveryMode` API changes the mode. `deliveryMode` reports the active value. Changing modes does not publish a measurement.
+The public `setDeliveryMode` API changes the mode. `deliveryMode` reports the active value. `setPeriodicUpdateFrequencyHz` configures the maximum periodic delivery rate, and `periodicUpdateFrequencyHz` reports it. Changing either setting does not publish a measurement.
 
 The measurement pipeline continues to process camera results in both modes:
 
-- `CONTINUOUS` delivers each new processed camera result.
+- `PERIODIC` delivers newly processed camera results at no more than the configured frequency.
 - `SNAPSHOT` delivers the current result once when the Xbox X button changes from released to pressed.
 
 Holding X does not repeat a snapshot. A snapshot retains its capture timestamp. Future drivetrain code must consume it as one update rather than treating the retained value as fresh on every robot loop.
